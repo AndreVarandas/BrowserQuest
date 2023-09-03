@@ -8,7 +8,6 @@ const _ = require("underscore");
 const BISON = require("bison");
 const WS = {};
 const useBison = false;
-const log = require("log");
 
 module.exports = WS;
 
