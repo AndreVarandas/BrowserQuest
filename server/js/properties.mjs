@@ -1,7 +1,6 @@
+import {getKindAsString, isMob, getWeaponRank} from "../../shared/js/gametypes.mjs";
 
-var Types = require("../../shared/js/gametypes");
-
-var Properties = {
+const Properties = {
     rat: {
         drops: {
             flask: 40,
@@ -12,7 +11,7 @@ var Properties = {
         armor: 1,
         weapon: 1
     },
-    
+
     skeleton: {
         drops: {
             flask: 40,
@@ -24,7 +23,7 @@ var Properties = {
         armor: 2,
         weapon: 2
     },
-    
+
     goblin: {
         drops: {
             flask: 50,
@@ -36,7 +35,7 @@ var Properties = {
         armor: 2,
         weapon: 1
     },
-    
+
     ogre: {
         drops: {
             burger: 10,
@@ -49,7 +48,7 @@ var Properties = {
         armor: 3,
         weapon: 2
     },
-    
+
     spectre: {
         drops: {
             flask: 30,
@@ -61,7 +60,7 @@ var Properties = {
         armor: 2,
         weapon: 4
     },
-    
+
     deathknight: {
         drops: {
             burger: 95,
@@ -71,7 +70,7 @@ var Properties = {
         armor: 3,
         weapon: 3
     },
-    
+
     crab: {
         drops: {
             flask: 50,
@@ -83,7 +82,7 @@ var Properties = {
         armor: 2,
         weapon: 1
     },
-    
+
     snake: {
         drops: {
             flask: 50,
@@ -95,7 +94,7 @@ var Properties = {
         armor: 3,
         weapon: 2
     },
-    
+
     skeleton2: {
         drops: {
             flask: 60,
@@ -107,7 +106,7 @@ var Properties = {
         armor: 3,
         weapon: 3
     },
-    
+
     eye: {
         drops: {
             flask: 50,
@@ -119,7 +118,7 @@ var Properties = {
         armor: 3,
         weapon: 3
     },
-    
+
     bat: {
         drops: {
             flask: 50,
@@ -130,7 +129,7 @@ var Properties = {
         armor: 2,
         weapon: 1
     },
-    
+
     wizard: {
         drops: {
             flask: 50,
@@ -141,7 +140,7 @@ var Properties = {
         armor: 2,
         weapon: 6
     },
-    
+
     boss: {
         drops: {
             goldensword: 100
@@ -149,35 +148,31 @@ var Properties = {
         hp: 700,
         armor: 6,
         weapon: 7
-    }
-};
+    },
 
-Properties.getArmorLevel = function(kind) {
-    try {
-        if(Types.isMob(kind)) {
-            return Properties[Types.getKindAsString(kind)].armor;
-        } else {
-            return Types.getArmorRank(kind) + 1;
+    getWeaponLevel: function (kind) {
+        try {
+            if (isMob(kind)) {
+                return this[getKindAsString(kind)].weapon;
+            } else {
+                return getWeaponRank(kind) + 1;
+            }
+        } catch (e) {
+            console.error("No level found for weapon: " + getKindAsString(kind));
         }
-    } catch(e) {
-        log.error("No level found for armor: "+Types.getKindAsString(kind));
-    }
-};
+    },
 
-Properties.getWeaponLevel = function(kind) {
-    try {
-        if(Types.isMob(kind)) {
-            return Properties[Types.getKindAsString(kind)].weapon;
-        } else {
-            return Types.getWeaponRank(kind) + 1;
+    getArmorLevel: function (kind) {
+        try {
+            return this[getKindAsString(kind)].armor;
+        } catch (e) {
+            console.error("No level found for armor: " + getKindAsString(kind));
         }
-    } catch(e) {
-        log.error("No level found for weapon: "+Types.getKindAsString(kind));
+    },
+
+    getHitPoints: function (kind) {
+        return this[getKindAsString(kind)].hp;
     }
 };
 
-Properties.getHitPoints = function(kind) {
-    return Properties[Types.getKindAsString(kind)].hp;
-};
-
-module.exports = Properties;
+export default Properties

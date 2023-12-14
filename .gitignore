@@ -6,3 +6,8 @@ config_local*
 client/audio/music
 .DS_Store
 *.swp
+
+# Editors
+.idea
+.vs
+.vscode

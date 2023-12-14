@@ -1,31 +1,26 @@
-const cls = require("./lib/class");
-const path = require("path");
-const fs = require("fs");
-const _ = require("underscore");
-const Utils = require("./utils");
-const Checkpoint = require("./checkpoint");
+import fs from 'fs';
+import _ from 'underscore';
+import Utils from './utils.mjs';
+import Checkpoint from './checkpoint.mjs';
 
-module.exports = Map = cls.Class.extend({
-  init: function (filepath) {
-    var self = this;
-
+class Map {
+  constructor(filepath) {
     this.isLoaded = false;
 
-    fs.exists(filepath, (exists) => {
+    fs.exists(filepath, exists => {
       if (!exists) {
-        log.error(filepath + " doesn't exist.");
+        console.error(`${filepath} doesn't exist.`);
         return;
       }
 
-      fs.readFile(filepath, function (err, file) {
-        var json = JSON.parse(file.toString());
-
-        self.initMap(json);
+      fs.readFile(filepath, (err, file) => {
+        const json = JSON.parse(file.toString());
+        this.initMap(json);
       });
     });
-  },
+  }
 
-  initMap: function (map) {
+  initMap(map) {
     this.width = map.width;
     this.height = map.height;
     this.collisions = map.collisions;
@@ -35,7 +30,6 @@ module.exports = Map = cls.Class.extend({
     this.staticEntities = map.staticEntities;
     this.isLoaded = true;
 
-    // zone groups
     this.zoneWidth = 28;
     this.zoneHeight = 12;
     this.groupWidth = Math.floor(this.width / this.zoneWidth);
@@ -47,40 +41,34 @@ module.exports = Map = cls.Class.extend({
     if (this.ready_func) {
       this.ready_func();
     }
-  },
+  }
 
-  ready: function (f) {
+  ready(f) {
     this.ready_func = f;
-  },
+  }
 
-  tileIndexToGridPosition: function (tileNum) {
-    var x = 0,
-      y = 0;
+  tileIndexToGridPosition(tileNum) {
+    let x = 0, y = 0;
 
-    var getX = function (num, w) {
-      if (num == 0) {
-        return 0;
-      }
-      return num % w == 0 ? w - 1 : (num % w) - 1;
-    };
+    const getX = (num, w) => num == 0 ? 0 : num % w == 0 ? w - 1 : (num % w) - 1;
 
     tileNum -= 1;
     x = getX(tileNum + 1, this.width);
     y = Math.floor(tileNum / this.width);
 
-    return { x: x, y: y };
-  },
+    return { x, y };
+  }
 
-  GridPositionToTileIndex: function (x, y) {
+  GridPositionToTileIndex(x, y) {
     return y * this.width + x + 1;
-  },
+  }
 
-  generateCollisionGrid: function () {
+  generateCollisionGrid () {
     this.grid = [];
 
     if (this.isLoaded) {
-      var tileIndex = 0;
-      for (var j, i = 0; i < this.height; i++) {
+      let tileIndex = 0;
+      for (let j, i = 0; i < this.height; i++) {
         this.grid[i] = [];
         for (j = 0; j < this.width; j++) {
           if (_.include(this.collisions, tileIndex)) {
@@ -91,49 +79,49 @@ module.exports = Map = cls.Class.extend({
           tileIndex += 1;
         }
       }
-      //log.info("Collision grid generated.");
     }
-  },
+  }
 
-  isOutOfBounds: function (x, y) {
+  isOutOfBounds(x, y) {
     return x <= 0 || x >= this.width || y <= 0 || y >= this.height;
-  },
+  }
 
-  isColliding: function (x, y) {
+  isColliding(x, y) {
     if (this.isOutOfBounds(x, y)) {
       return false;
     }
-    return this.grid[y][x] === 1;
-  },
 
-  GroupIdToGroupPosition: function (id) {
-    var posArray = id.split("-");
+    return this.grid[y][x] === 1;
+  }
+
+  GroupIdToGroupPosition(id) {
+    const posArray = id.split("-");
 
     return pos(parseInt(posArray[0]), parseInt(posArray[1]));
-  },
+  }
 
-  forEachGroup: function (callback) {
-    var width = this.groupWidth,
+  forEachGroup(callback) {
+    const width = this.groupWidth,
       height = this.groupHeight;
 
-    for (var x = 0; x < width; x += 1) {
-      for (var y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      for (let y = 0; y < height; y += 1) {
         callback(x + "-" + y);
       }
     }
-  },
+  }
 
-  getGroupIdFromPosition: function (x, y) {
-    var w = this.zoneWidth,
+  getGroupIdFromPosition(x, y) {
+    const w = this.zoneWidth,
       h = this.zoneHeight,
       gx = Math.floor((x - 1) / w),
       gy = Math.floor((y - 1) / h);
 
     return gx + "-" + gy;
-  },
+  }
 
-  getAdjacentGroupPositions: function (id) {
-    var self = this,
+  getAdjacentGroupPositions(id) {
+    const self = this,
       position = this.GroupIdToGroupPosition(id),
       x = position.x,
       y = position.y,
@@ -170,65 +158,58 @@ module.exports = Map = cls.Class.extend({
         pos.y >= self.groupHeight
       );
     });
-  },
+  }
 
-  forEachAdjacentGroup: function (groupId, callback) {
+  forEachAdjacentGroup(groupId, callback) {
     if (groupId) {
-      _.each(this.getAdjacentGroupPositions(groupId), function (pos) {
+      _.each(this.getAdjacentGroupPositions(groupId), pos => {
         callback(pos.x + "-" + pos.y);
       });
     }
-  },
+  }
 
-  initConnectedGroups: function (doors) {
-    var self = this;
-
+  initConnectedGroups(doors) {
     this.connectedGroups = {};
-    _.each(doors, function (door) {
-      var groupId = self.getGroupIdFromPosition(door.x, door.y),
-        connectedGroupId = self.getGroupIdFromPosition(door.tx, door.ty),
-        connectedPosition = self.GroupIdToGroupPosition(connectedGroupId);
+    _.each(doors, door => {
+      const groupId = this.getGroupIdFromPosition(door.x, door.y);
+      const connectedGroupId = this.getGroupIdFromPosition(door.tx, door.ty);
+      const connectedPosition = this.GroupIdToGroupPosition(connectedGroupId);
 
-      if (groupId in self.connectedGroups) {
-        self.connectedGroups[groupId].push(connectedPosition);
+      if (groupId in this.connectedGroups) {
+        this.connectedGroups[groupId].push(connectedPosition);
       } else {
-        self.connectedGroups[groupId] = [connectedPosition];
+        this.connectedGroups[groupId] = [connectedPosition];
       }
     });
-  },
+  }
 
-  initCheckpoints: function (cpList) {
-    var self = this;
-
+  initCheckpoints(cpList) {
     this.checkpoints = {};
     this.startingAreas = [];
 
-    _.each(cpList, function (cp) {
-      var checkpoint = new Checkpoint(cp.id, cp.x, cp.y, cp.w, cp.h);
-      self.checkpoints[checkpoint.id] = checkpoint;
+    _.each(cpList, cp => {
+      const checkpoint = new Checkpoint(cp.id, cp.x, cp.y, cp.w, cp.h);
+      this.checkpoints[checkpoint.id] = checkpoint;
       if (cp.s === 1) {
-        self.startingAreas.push(checkpoint);
+        this.startingAreas.push(checkpoint);
       }
     });
-  },
+  }
 
-  getCheckpoint: function (id) {
+  getCheckpoint(id) {
     return this.checkpoints[id];
-  },
+  }
 
-  getRandomStartingPosition: function () {
-    var nbAreas = _.size(this.startingAreas);
-    i = Utils.randomInt(0, nbAreas - 1);
-    area = this.startingAreas[i];
+  getRandomStartingPosition() {
+    const nbAreas = _.size(this.startingAreas);
+    const i = Utils.randomInt(0, nbAreas - 1);
+    const area = this.startingAreas[i];
 
     return area.getRandomPosition();
-  },
-});
+  }
+}
 
-var pos = function (x, y) {
-  return { x: x, y: y };
-};
+export default Map;
 
-var equalPositions = function (pos1, pos2) {
-  return pos1.x === pos2.x && pos2.y === pos2.y;
-};
+const pos = (x, y) => ({ x, y });
+const equalPositions = (pos1, pos2) => pos1.x === pos2.x && pos2.y === pos2.y;
